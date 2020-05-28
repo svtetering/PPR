@@ -120,6 +120,35 @@ namespace PPR.Main.Levels {
         public List<LevelObject> objects = new List<LevelObject>();
         public List<LevelSpeed> speeds = new List<LevelSpeed>();
 
+        public static List<LevelSpeed> SortSpeeds(List<LevelSpeed> unsorted) {
+            unsorted.Sort((speed1, speed2) => speed1.offset.CompareTo(speed2.offset));
+
+            int offsetindex = 0;
+            int direction = 0;
+            List<LevelSpeed> sorted = new List<LevelSpeed>();
+            for(int i = 0; i < unsorted.Count; i++) {
+                if(unsorted[i].offset == 0) {
+                    direction = Math.Sign(unsorted[i].speed);
+                    sorted.Add(unsorted[i]);
+                    unsorted[i] = null;
+                    offsetindex = i;
+                    break;
+                }
+            }
+            for(int i = 0; i < unsorted.Count - 1; i++) {
+                offsetindex += direction;
+                while(unsorted[offsetindex] == null) {
+                    offsetindex += direction;
+                }
+
+                direction = Math.Sign(unsorted[offsetindex].speed);
+                sorted.Add(unsorted[offsetindex]);
+                unsorted[offsetindex] = null;
+            }
+
+            return sorted;
+        }
+
         public Level(string[] lines, string name) {
             int[] objectsOffsets = lines[1].Length > 0 ? lines[1].Split(':').Select(str => int.Parse(str)).ToArray() : new int[0];
             int[] speeds = lines[2].Length > 0 ? lines[2].Split(':').Select(str => int.Parse(str)).ToArray() : new int[0];
@@ -132,7 +161,9 @@ namespace PPR.Main.Levels {
                 this.speeds.Add(new LevelSpeed(speeds[i], speedsStarts[i]));
                 objects.Add(new LevelObject(LevelObject.speedChar, speedsStarts[i]));
             }
-            this.speeds.Sort((speed1, speed2) => speed1.offset.CompareTo(speed2.offset));
+
+            this.speeds = SortSpeeds(this.speeds);
+
             string[] meta = lines[4].Split(':');
             metadata = new LevelMetadata(this, meta, name);
         }
